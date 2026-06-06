@@ -2,4 +2,4 @@
 
 *Picture swapable*
 
-**game** : https://toanvan675.github.io/Toan-VS-Chos-Hoaf/
+**game** : https://toanvan675.github.io/Toan-VS-Hoaf-Bel/
