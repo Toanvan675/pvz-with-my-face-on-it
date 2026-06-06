@@ -58,7 +58,7 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 // ==========================================
-// --- HỆ THỐNG QUẢN LÝ CẢ 4 LOẠI NHẠC TÁCH BIỆT ---
+// --- KHỞI TẠO ÂM THANH CHUẨN ĐỒNG BỘ ---
 // ==========================================
 const menuMusic = new Audio('audio/menu.mp3');
 menuMusic.loop = true;
@@ -76,9 +76,10 @@ const gameOverMusic = new Audio('audio/gameover.mp3');
 gameOverMusic.loop = false;
 gameOverMusic.volume = 0.6;
 
+// Kích hoạt tương tác đầu tiên để tránh trình duyệt chặn nhạc
 function khichayWeb() {
     if (gameState === 'MENU') {
-        menuMusic.play().catch(e => console.log("Trình duyệt chặn phát nhạc tự động"));
+        menuMusic.play().catch(e => console.log("Chờ tương tác người dùng để phát nhạc"));
     }
     window.removeEventListener('click', khichayWeb);
     window.removeEventListener('touchstart', khichayWeb);
@@ -159,12 +160,12 @@ class Zombie {
             gameState = 'GAMEOVER';
             document.getElementById('gameOverOverlay').style.display = 'flex';
             
-            bgMusic.pause();
-            menuMusic.pause();
-            pauseMusic.pause();
+            bgMusic.pause(); bgMusic.currentTime = 0;
+            menuMusic.pause(); menuMusic.currentTime = 0;
+            pauseMusic.pause(); pauseMusic.currentTime = 0;
             
             gameOverMusic.currentTime = 0;
-            gameOverMusic.play().catch(e => console.log("Trình duyệt chặn nhạc kết thúc"));
+            gameOverMusic.play().catch(e => console.log("Không thể phát nhạc kết thúc"));
         }
     }
     draw() {
@@ -216,37 +217,44 @@ function startGame() {
     resetGameData(); 
     switchState('PLAYING', {}); 
     
-    menuMusic.pause();
-    pauseMusic.pause();
-    gameOverMusic.pause();
+    menuMusic.pause(); menuMusic.currentTime = 0;
+    pauseMusic.pause(); pauseMusic.currentTime = 0;
+    gameOverMusic.pause(); gameOverMusic.currentTime = 0;
     
     bgMusic.currentTime = 0;
-    bgMusic.play().catch(e => console.log("Trình duyệt chặn nhạc nền."));
+    bgMusic.play().catch(e => console.log("Lỗi âm thanh nền"));
 }
 
 function backToMenu() { 
     resetGameData(); 
     switchState('MENU', { mainMenu: 'flex' }); 
     
-    bgMusic.pause(); 
-    pauseMusic.pause();
-    gameOverMusic.pause(); 
+    bgMusic.pause(); bgMusic.currentTime = 0;
+    pauseMusic.pause(); pauseMusic.currentTime = 0;
+    gameOverMusic.pause(); gameOverMusic.currentTime = 0;
     
     menuMusic.currentTime = 0;
-    menuMusic.play().catch(e => console.log("Không thể phát nhạc menu"));
+    menuMusic.play().catch(e => console.log("Lỗi âm thanh menu"));
 }
 
+// SỬA LỖI ĐỘC QUYỀN: BẬT / TẮT NHẠC PAUSE TUYỆT ĐỐI KHÔNG BỊ TRÀN
 function togglePause() { 
-    let newState = gameState === 'PLAYING' ? 'PAUSED' : 'PLAYING';
-    switchState(newState, { pauseOverlay: newState === 'PAUSED' ? 'flex' : 'none' }); 
-    
-    if (newState === 'PAUSED') {
+    if (gameState === 'PLAYING') {
+        switchState('PAUSED', { pauseOverlay: 'flex' }); 
         bgMusic.pause();
+        
+        // Bật nhạc tạm dừng
         pauseMusic.currentTime = 0;
-        pauseMusic.play().catch(e => console.log("Không thể phát nhạc tạm dừng"));
-    } else {
+        pauseMusic.play().catch(e => console.log("Lỗi phát nhạc tạm dừng"));
+    } 
+    else if (gameState === 'PAUSED') {
+        switchState('PLAYING', {}); 
+        
+        // Tắt nhạc tạm dừng triệt để bằng việc tua thời gian về 0
         pauseMusic.pause();
-        bgMusic.play().catch(e => console.log("Không thể phát lại nhạc nền"));
+        pauseMusic.currentTime = 0; 
+        
+        bgMusic.play().catch(e => console.log("Lỗi tiếp tục nhạc nền"));
     }
 }
 
@@ -262,7 +270,7 @@ canvas.addEventListener('click', (e) => {
     const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
     const my = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-    // XỬ LÝ CLICK VÀO 2 NÚT TRÊN CANVAS (Ngăn chọn thẻ cây đè lên bên dưới)
+    // XỬ LÝ CLICK 2 NÚT TRÊN CANVAS ĐÃ ĐƯỢC FIX TỌA ĐỘ TOÀN DIỆN
     if (my < uiH) {
         if (mx >= 710 && mx <= 790 && my >= 10 && my <= 90) {
             toggleSpeed();
@@ -368,14 +376,14 @@ function renderGame() {
     ctx.fillStyle = 'white'; ctx.font = "bold 16px Arial"; ctx.fillText("XÓA", shovelX + 40, 80);
 
     // ==========================================
-    // VẼ 2 NÚT ĐIỀU KHIỂN TRỰC TIẾP LÊN CANVAS (Bên phải ô Xóa)
+    // VẼ 2 NÚT ĐIỀU KHIỂN TRÊN CANVAS (Khắc chế lỗi Mobile tràn chữ)
     // ==========================================
     ctx.lineWidth = 2;
     ctx.strokeStyle = '#332211';
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    // Nút Tốc độ (Tọa độ x: 710, y: 10, rộng: 80, cao: 80)
+    // Nút Tốc độ (x: 710, y: 10, w: 80, h: 80)
     ctx.fillStyle = '#8c6339';
     ctx.fillRect(710, 10, 80, 80);
     ctx.strokeRect(710, 10, 80, 80);
@@ -385,7 +393,7 @@ function renderGame() {
     ctx.font = "bold 18px Arial";
     ctx.fillText(`${gameSpeed}x`, 750, 62);
 
-    // Nút Tạm dừng (Tọa độ x: 800, y: 10, rộng: 80, cao: 80)
+    // Nút Tạm dừng (x: 800, y: 10, w: 80, h: 80)
     ctx.fillStyle = '#8c6339';
     ctx.fillRect(800, 10, 80, 80);
     ctx.strokeRect(800, 10, 80, 80);
