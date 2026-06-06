@@ -2,4 +2,4 @@
 
 *Picture swapable*
 
-https://toanvan675.github.io/toan-vs-cho-hoa/
+**game** : https://toanvan675.github.io/toan-vs-cho-hoa/
