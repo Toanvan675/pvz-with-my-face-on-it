@@ -77,7 +77,6 @@ const plantConfig = {
 const plantCards = ['sunflower', 'peashooter', 'wallnut']; 
 
 const imgs = {}, imgStatus = {};
-// Đã thêm 'shovel' vào danh sách tải ảnh (bạn có thể thêm file images/shovel.png nếu muốn)
 ['sunflower', 'peashooter', 'wallnut', 'sun', 'pea', 'zombie1', 'shovel'].forEach(key => {
     imgs[key] = new Image();
     imgs[key].src = `images/${key}.png`;
@@ -203,34 +202,28 @@ canvas.addEventListener('click', (e) => {
     const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
     const my = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-    // Thu thập mặt trời
     suns.forEach((s) => { if (s.alive && Math.hypot(s.x - mx, s.y - my) < 35) { sun += 25; s.alive = false; } });
 
-    // Khu vực Click UI (thẻ bài)
     if (my < uiH) {
         let cardIdx = Math.floor((mx - 310) / 100);
         if (cardIdx >= 0 && cardIdx < plantCards.length && mx < 310 + cardIdx * 100 + 80) {
             selectedPlant = plantCards[cardIdx];
         } 
-        // Logic Click thẻ Xẻng (ở vị trí x = 610)
         else if (mx >= 610 && mx <= 690) {
             selectedPlant = 'shovel';
         }
     } 
-    // Khu vực Click bản đồ (trồng cây hoặc dùng xẻng)
     else if (selectedPlant) {
         let gx = Math.floor(mx / gridW), gy = Math.floor((my - uiH) / gridH);
         if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) {
             let existingPlantIndex = plants.findIndex(p => p.gridX === gx && p.gridY === gy);
             
-            // XÓA CÂY BẰNG XẺNG
             if (selectedPlant === 'shovel') {
                 if (existingPlantIndex !== -1) {
-                    plants.splice(existingPlantIndex, 1); // Nhổ cây
-                    selectedPlant = null; // Dùng xẻng xong thì tắt luôn
+                    plants.splice(existingPlantIndex, 1);
+                    selectedPlant = null;
                 }
             } 
-            // TRỒNG CÂY
             else if (existingPlantIndex === -1) {
                 if (sun >= plantConfig[selectedPlant].cost) {
                     plants.push(new Plant(gx, gy, selectedPlant));
@@ -270,16 +263,14 @@ function renderGame() {
     
     ctx.fillStyle = '#4a3319'; ctx.fillRect(0, 0, canvas.width, uiH);
     
+    // GỘP CHUNG HIỂN THỊ ĐIỂM SỐ VÀ TÀI NGUYÊN SANG GÓC TRÁI
     ctx.fillStyle = '#ffd700'; 
     ctx.font = "bold 20px Arial"; 
     ctx.textAlign = "left"; 
     ctx.textBaseline = "middle";
-    ctx.fillText(`☀️ Điểm 0 môn văn: ${sun}`, 20, 50);
-
-    ctx.textAlign = "right";
-    ctx.fillText(`Điểm: ${score}`, canvas.width - 250, 50); 
+    ctx.fillText(`☀️ Điểm 0 môn văn: ${sun}`, 20, 35);
+    ctx.fillText(`🏆 Điểm: ${score}`, 20, 70); // Đưa điểm xuống dòng dưới
     
-    // Vẽ các thẻ bài (Hoa, Cây đậu, Bánh mì)
     plantCards.forEach((type, i) => {
         let x = 310 + i * 100;
         let pCfg = plantConfig[type];
@@ -294,9 +285,8 @@ function renderGame() {
         ctx.fillStyle = 'white'; ctx.font = "bold 14px Arial"; ctx.fillText(pCfg.cost, x + 40, 80);
     });
 
-    // Vẽ thẻ XẺNG
-    let shovelX = 610; // Vị trí thẻ xẻng nằm ngay sau Bánh mì
-    ctx.fillStyle = selectedPlant === 'shovel' ? '#ff4d4d' : '#8c6339'; // Nền xẻng khi bấm vào sẽ thành màu đỏ tươi
+    let shovelX = 610; 
+    ctx.fillStyle = selectedPlant === 'shovel' ? '#ff4d4d' : '#8c6339'; 
     ctx.fillRect(shovelX, 10, 80, 80);
     ctx.textAlign = "center";
     if (imgStatus['shovel']) { 
@@ -306,11 +296,9 @@ function renderGame() {
     }
     ctx.fillStyle = 'white'; ctx.font = "bold 16px Arial"; ctx.fillText("XÓA", shovelX + 40, 80);
 
-    // Vẽ lưới ô vuông trên bản đồ
     ctx.strokeStyle = 'rgba(255,255,255,0.12)';
     for(let i=0; i<rows; i++) for(let j=0; j<cols; j++) ctx.strokeRect(j*gridW, i*gridH + uiH, gridW, gridH);
 
-    // Vẽ các thực thể trong game (Mặt trời lên cuối để đè lên mọi thứ)
     [...plants, ...zombies, ...projectiles, ...suns].forEach(obj => obj.draw());
 }
 
